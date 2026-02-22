@@ -100,7 +100,7 @@ class MoveRelearner_Scene
     overlay.clear
     @pokemon.types.each_with_index do |type, i|
       type_number = GameData::Type.get(type).icon_position
-      type_rect = Rect.new(0, type_number * TYPE_ICON_H, TYPE_ICON_W, TYPE_ICON_H)
+      type_rect = Rect.new(0, type_number * GameData::Type::ICON_SIZE[1], GameData::Type::ICON_SIZE[0], GameData::Type::ICON_SIZE[1])
       type_x = (@pokemon.types.length == 1) ? TYPE_SINGLE_X : TYPE_BASE_X + (TYPE_X_SPACING * i)
       overlay.blt(type_x, TYPE_ICON_Y, @typebitmap.bitmap, type_rect)
     end
@@ -114,7 +114,7 @@ class MoveRelearner_Scene
       if moveobject
         moveData = GameData::Move.get(moveobject)
         type_number = GameData::Type.get(moveData.display_type(@pokemon)).icon_position
-        imagepos.push([_INTL("Graphics/UI/types"), TYPE_IMAGE_X, yPos + TYPE_IMAGE_Y_OFFSET, 0, type_number * TYPE_ICON_H, TYPE_ICON_W, TYPE_ICON_H])
+        imagepos.push([_INTL("Graphics/UI/types"), TYPE_IMAGE_X, yPos + TYPE_IMAGE_Y_OFFSET, 0, type_number * GameData::Type::ICON_SIZE[1], GameData::Type::ICON_SIZE[0], GameData::Type::ICON_SIZE[1]])
         textpos.push([moveData.name, MOVE_NAME_X, yPos, :left, Color.new(248, 248, 248), Color.black])
         textpos.push([_INTL("PP"), PP_LABEL_X, yPos + PP_LABEL_Y_OFFSET, :left, Color.new(64, 64, 64), Color.new(176, 176, 176)])
         if moveData.total_pp > 0

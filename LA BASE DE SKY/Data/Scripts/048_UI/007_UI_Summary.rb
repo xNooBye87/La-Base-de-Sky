@@ -698,7 +698,7 @@ class PokemonSummary_Scene
     # Draw Pokémon type(s)
     @pokemon.types.each_with_index do |type, i|
       type_number = GameData::Type.get(type).icon_position
-      type_rect = Rect.new(0, type_number * 28, 64, 28)
+      type_rect = Rect.new(0, type_number * GameData::Type::ICON_SIZE[1], GameData::Type::ICON_SIZE[0], GameData::Type::ICON_SIZE[1])
       type_x = (@pokemon.types.length == 1) ? P1_TYPE_1_ICON_X : P1_TYPE_2_ICON_X + (66 * i)
       overlay.blt(type_x, P1_TYPE_ICON_Y, @typebitmap.bitmap, type_rect)
     end
@@ -1040,7 +1040,7 @@ class PokemonSummary_Scene
     # Draw Pokémon's type icon(s)
     @pokemon.types.each_with_index do |type, i|
       type_number = GameData::Type.get(type).icon_position
-      type_rect = Rect.new(0, type_number * 28, 64, 28)
+      type_rect = Rect.new(0, type_number * GameData::Type::ICON_SIZE[1], GameData::Type::ICON_SIZE[0], GameData::Type::ICON_SIZE[1])
       type_x = (@pokemon.types.length == 1) ? 130 : 96 + (70 * i)
       overlay.blt(type_x, P4_SEL_TYPE_Y, @typebitmap.bitmap, type_rect)
     end
