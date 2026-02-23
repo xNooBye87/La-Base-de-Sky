@@ -206,7 +206,8 @@ class Battle::Scene
     msg_window = @sprites["messageWindow"]
     # Display message
     PBDebug.log_message(msg)
-    pbMessageDisplay(msg_window, msg, true, proc { |msg_wndw| }) { pbUpdate }
+    color_tag = shadowc3tag(MESSAGE_BASE_COLOR, MESSAGE_SHADOW_COLOR)
+    pbMessageDisplay(msg_window, color_tag + msg, true, proc { |msg_wndw| }) { pbUpdate }
     # Check if the message is brief
     @briefMessage = true if brief   # Don't wait at all if a brief message
     return if @briefMessage
@@ -232,7 +233,8 @@ class Battle::Scene
     msg_window = @sprites["messageWindow"]
     # Display message
     PBDebug.log_message(msg)
-    pbMessageDisplay(msg_window, msg + "\1", true, proc { |msg_wndw| }) { pbUpdate }
+    color_tag = shadowc3tag(MESSAGE_BASE_COLOR, MESSAGE_SHADOW_COLOR)
+    pbMessageDisplay(msg_window, color_tag + msg + "\1", true, proc { |msg_wndw| }) { pbUpdate }
     # After message has finished displaying, wait for 3 seconds or input
     timer_start = System.real_uptime
     loop do
@@ -257,7 +259,8 @@ class Battle::Scene
     msg_window = @sprites["messageWindow"]
     # Display message
     PBDebug.log_message(msg)
-    ret = pbMessageDisplay(msg_window, msg, true, proc { |msg_wndw|
+    color_tag = shadowc3tag(MESSAGE_BASE_COLOR, MESSAGE_SHADOW_COLOR)
+    ret = pbMessageDisplay(msg_window, color_tag + msg, true, proc { |msg_wndw|
       next Kernel.pbShowCommands(msg_wndw, commands, defaultValue + 1, 0) { pbGraphicsUpdate; pbFrameUpdate(msg_window) }
     }) { pbGraphicsUpdate; pbFrameUpdate(msg_window) }
     msg_window.text = ""
