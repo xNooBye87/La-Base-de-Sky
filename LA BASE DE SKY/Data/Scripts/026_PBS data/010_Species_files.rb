@@ -46,9 +46,9 @@ module GameData
       ret = pbResolveBitmap(sprintf("%s%s%s", path, species_data.species, suffix))
       return ret if ret
       
-      # Try baby species as fallback
+      # Try baby species as fallback (first pre-evolution)
       baby_species = species_data.get_baby_species
-      return nil unless baby_species
+      return nil if baby_species.nil? || baby_species == species_data.species
       
       if form > 0
         ret = pbResolveBitmap(sprintf("%s%s_%d%s", path, baby_species, form, suffix))
