@@ -355,7 +355,7 @@ class UI::OptionsVisualsList < Window_DrawableCommand
       end
       raise _INTL("Opción {1} tiene parámetros inválidos.", option[:name])
     when :number_slider
-      if option[:parameters].is_a?(Array) && option[:parameters][1]
+      if option[:parameters].is_a?(Array) && option[:parameters][0]
         return option[:parameters][0]   # Parameter is [lowest, highest, interval]
       end
       raise _INTL("Opción {1} tiene parámetros inválidos.", option[:name])
@@ -412,7 +412,7 @@ class UI::OptionsVisualsList < Window_DrawableCommand
       interval = option[:parameters][2]
       if @values[this_index] > 0
         ret = @values[this_index] - interval
-        ret = 0 if ret < 0
+        ret = lowest if ret < lowest
         return ret
       end
     end
@@ -1231,7 +1231,7 @@ MenuHandlers.add(:options_menu, :skip_move_learning, {
   "page"        => :gameplay,
   "name"        => _INTL("Saltar aprender Movs."),
   "order"       => 81,
-  "type"        => EnumOption,
+  "type"        => :array,
   "parameters"  => [_INTL("Sí"), _INTL("No")],
   "description" => _INTL("Elige si quieres saltarte el aprendizaje de movimientos al subir de nivel.\nPuedes aprenderlos más tarde desde el recordador de movimientos."),
   "condition"   => proc { next Settings::ALLOW_SKIPPING_MOVE_LEARNING },
