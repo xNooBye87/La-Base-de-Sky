@@ -1093,409 +1093,410 @@ end
 #===============================================================================
 # Options Menu commands.
 #===============================================================================
+if Settings::USE_NEW_OPTIONS_UI
+  # Default page handlers for options menu
+  PageHandlers.add(:options_menu, :gameplay, {
+    :name  => proc { next _INTL("Juego") },
+    :order => 10,
+    :description => proc { next _INTL("Cambia cómo se comporta el juego.") }
+  })
 
-# Default page handlers for options menu
-PageHandlers.add(:options_menu, :gameplay, {
-  :name  => proc { next _INTL("Juego") },
-  :order => 10,
-  :description => proc { next _INTL("Cambia cómo se comporta el juego.") }
-})
+  PageHandlers.add(:options_menu, :audio, {
+    :name  => proc { next _INTL("Audio") },
+    :order => 20,
+    :description => proc { next _INTL("Cambia el volumen del juego.") }
+  })
 
-PageHandlers.add(:options_menu, :audio, {
-  :name  => proc { next _INTL("Audio") },
-  :order => 20,
-  :description => proc { next _INTL("Cambia el volumen del juego.") }
-})
+  PageHandlers.add(:options_menu, :graphics, {
+    :name  => proc { next _INTL("Gráficos") },
+    :order => 30,
+    :description => proc { next _INTL("Cambia cómo se ve el juego.") }
+  })
 
-PageHandlers.add(:options_menu, :graphics, {
-  :name  => proc { next _INTL("Gráficos") },
-  :order => 30,
-  :description => proc { next _INTL("Cambia cómo se ve el juego.") }
-})
+  # PageHandlers.add(:options_menu, :controls, {
+  #   :name  => proc { next _INTL("Controles") },
+  #   :order => 40,
+  #   :description => proc { next _INTL("Edita los controles del juego.") }
+  # })
 
-# PageHandlers.add(:options_menu, :controls, {
-#   :name  => proc { next _INTL("Controles") },
-#   :order => 40,
-#   :description => proc { next _INTL("Edita los controles del juego.") }
-# })
+  PageHandlers.add(:options_menu, :plugins, {
+    :name  => proc { next _INTL("Plugins") },
+    :order => 50,
+    :condition => proc { next PageHandlers.has_any?(:options_menu, :plugins) },
+    :description => proc { next _INTL("Configuraciones de Plugins.") }
+  })
 
-PageHandlers.add(:options_menu, :plugins, {
-  :name  => proc { next _INTL("Plugins") },
-  :order => 50,
-  :condition => proc { next PageHandlers.has_any?(:options_menu, :plugins) },
-  :description => proc { next _INTL("Configuraciones de Plugins.") }
-})
-
-MenuHandlers.add(:options_menu, :text_speed, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Velocidad de texto"),
-  "order"       => 10,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Len"), _INTL("Med"), _INTL("Ráp"), _INTL("Inst")] },
-  "description" => _INTL("Elige la velocidad a la que aparece el texto."),
-  "on_select"   => proc { |screen| screen.sprites[:speech_box].letterbyletter = true },
-  "get_proc"    => proc { next $PokemonSystem.textspeed },
-  "set_proc"    => proc { |value, screen|
-    next if value == $PokemonSystem.textspeed
-    $PokemonSystem.textspeed = value
-    # Display the message with the selected text speed to gauge it better.
-    screen.sprites[:speech_box].textspeed      = MessageConfig.pbGetTextSpeed
-    screen.sprites[:speech_box].letterbyletter = true
-    screen.sprites[:speech_box].text           = screen.sprites[:speech_box].text
-  }
-})
+  MenuHandlers.add(:options_menu, :text_speed, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Velocidad de texto"),
+    "order"       => 10,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Len"), _INTL("Med"), _INTL("Ráp"), _INTL("Inst")] },
+    "description" => _INTL("Elige la velocidad a la que aparece el texto."),
+    "on_select"   => proc { |screen| screen.sprites[:speech_box].letterbyletter = true },
+    "get_proc"    => proc { next $PokemonSystem.textspeed },
+    "set_proc"    => proc { |value, screen|
+      next if value == $PokemonSystem.textspeed
+      $PokemonSystem.textspeed = value
+      # Display the message with the selected text speed to gauge it better.
+      screen.sprites[:speech_box].textspeed      = MessageConfig.pbGetTextSpeed
+      screen.sprites[:speech_box].letterbyletter = true
+      screen.sprites[:speech_box].text           = screen.sprites[:speech_box].text
+    }
+  })
 
 
-MenuHandlers.add(:options_menu, :battle_style, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Estilo de combate"),
-  "order"       => 20,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Cambio"), _INTL("Fijo")] }, 
-  "description" => _INTL("Elige si quieres que se te ofrezca la opción de cambiar de Pokémon cuando se debilita el del rival."),
-  "get_proc"    => proc { next $PokemonSystem.battlestyle },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.battlestyle = value }
-})
+  MenuHandlers.add(:options_menu, :battle_style, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Estilo de combate"),
+    "order"       => 20,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Cambio"), _INTL("Fijo")] }, 
+    "description" => _INTL("Elige si quieres que se te ofrezca la opción de cambiar de Pokémon cuando se debilita el del rival."),
+    "get_proc"    => proc { next $PokemonSystem.battlestyle },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.battlestyle = value }
+  })
 
-MenuHandlers.add(:options_menu, :movement_style, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Mov. por defecto"),
-  "order"       => 30,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Andar"), _INTL("Correr")] },
-  "description" => _INTL("Elige tu velocidad de movimiento. Mantén Presionar hacia atrás mientras te mueves para moverte a la otra velocidad."),
-  "condition"   => proc { next $player&.has_running_shoes },
-  "get_proc"    => proc { next $PokemonSystem.runstyle },
-  "set_proc"    => proc { |value, _sceme| $PokemonSystem.runstyle = value }
-})
+  MenuHandlers.add(:options_menu, :movement_style, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Mov. por defecto"),
+    "order"       => 30,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Andar"), _INTL("Correr")] },
+    "description" => _INTL("Elige tu velocidad de movimiento. Mantén Presionar hacia atrás mientras te mueves para moverte a la otra velocidad."),
+    "condition"   => proc { next $player&.has_running_shoes },
+    "get_proc"    => proc { next $PokemonSystem.runstyle },
+    "set_proc"    => proc { |value, _sceme| $PokemonSystem.runstyle = value }
+  })
 
-MenuHandlers.add(:options_menu, :send_to_boxes, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Enviar a las Cajas"),
-  "order"       => 40,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Manual"), _INTL("Automático")] },
-  "description" => _INTL("Elige si los Pokémon capturados se envían a tus Cajas cuando tu equipo está lleno."),
-  "condition"   => proc { next Settings::NEW_CAPTURE_CAN_REPLACE_PARTY_MEMBER },
-  "get_proc"    => proc { next $PokemonSystem.sendtoboxes },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.sendtoboxes = value }
-})
+  MenuHandlers.add(:options_menu, :send_to_boxes, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Enviar a las Cajas"),
+    "order"       => 40,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Manual"), _INTL("Automático")] },
+    "description" => _INTL("Elige si los Pokémon capturados se envían a tus Cajas cuando tu equipo está lleno."),
+    "condition"   => proc { next Settings::NEW_CAPTURE_CAN_REPLACE_PARTY_MEMBER },
+    "get_proc"    => proc { next $PokemonSystem.sendtoboxes },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.sendtoboxes = value }
+  })
 
-MenuHandlers.add(:options_menu, :give_nicknames, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Motes al capturar"),
-  "order"       => 50,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Dar"), _INTL("No dar")] },
-  "description" => _INTL("Elige si poner mote a un Pokémon cuando lo obtienes."),
-  "get_proc"    => proc { next $PokemonSystem.givenicknames },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.givenicknames = value }
-})
+  MenuHandlers.add(:options_menu, :give_nicknames, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Motes al capturar"),
+    "order"       => 50,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Dar"), _INTL("No dar")] },
+    "description" => _INTL("Elige si poner mote a un Pokémon cuando lo obtienes."),
+    "get_proc"    => proc { next $PokemonSystem.givenicknames },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.givenicknames = value }
+  })
 
-MenuHandlers.add(:options_menu, :text_input_style, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Escritura"),
-  "order"       => 60,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Cursor"), _INTL("Teclado")] },
-  "description" => _INTL("Elige el método de escritura."),
-  "get_proc"    => proc { next $PokemonSystem.textinput },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.textinput = value }
-})
+  MenuHandlers.add(:options_menu, :text_input_style, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Escritura"),
+    "order"       => 60,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Cursor"), _INTL("Teclado")] },
+    "description" => _INTL("Elige el método de escritura."),
+    "get_proc"    => proc { next $PokemonSystem.textinput },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.textinput = value }
+  })
 
-MenuHandlers.add(:options_menu, :jump_texts, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Saltar textos"),
-  "order"       => 70,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Sí"), _INTL("No")] },
-  "description" => _INTL("Elige si quieres saltar rápido los textos pulsando la Z."),
-  "condition"   => proc { next Settings::ENABLE_SKIP_TEXT },
-  "get_proc"    => proc { next $PokemonSystem.skip_texts },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.skip_texts = value }
-})
+  MenuHandlers.add(:options_menu, :jump_texts, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Saltar textos"),
+    "order"       => 70,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Sí"), _INTL("No")] },
+    "description" => _INTL("Elige si quieres saltar rápido los textos pulsando la Z."),
+    "condition"   => proc { next Settings::ENABLE_SKIP_TEXT },
+    "get_proc"    => proc { next $PokemonSystem.skip_texts },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.skip_texts = value }
+  })
 
-MenuHandlers.add(:options_menu, :language, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Idioma"),
-  "order"       => 80,
-  "type"        => (Settings::LANGUAGES.length == 2) ? :array : :array_one,
-  "parameters"  => proc { Settings::LANGUAGES.map { |lang| lang[0] } },
-  "description" => _INTL("Elige el idioma del juego."),
-  "condition"   => proc { next Settings::LANGUAGES.length >= 2 },
-  "get_proc"    => proc { next $PokemonSystem.language },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.language = value }
-})
+  MenuHandlers.add(:options_menu, :language, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Idioma"),
+    "order"       => 80,
+    "type"        => (Settings::LANGUAGES.length == 2) ? :array : :array_one,
+    "parameters"  => proc { Settings::LANGUAGES.map { |lang| lang[0] } },
+    "description" => _INTL("Elige el idioma del juego."),
+    "condition"   => proc { next Settings::LANGUAGES.length >= 2 },
+    "get_proc"    => proc { next $PokemonSystem.language },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.language = value }
+  })
 
-MenuHandlers.add(:options_menu, :skip_move_learning, {
-  "page"        => :gameplay,
-  "name"        => _INTL("Saltar aprender Movs."),
-  "order"       => 81,
-  "type"        => :array,
-  "parameters"  => [_INTL("Sí"), _INTL("No")],
-  "description" => _INTL("Elige si quieres saltarte el aprendizaje de movimientos al subir de nivel.\nPuedes aprenderlos más tarde desde el recordador de movimientos."),
-  "condition"   => proc { next Settings::ALLOW_SKIPPING_MOVE_LEARNING },
-  "get_proc"    => proc { next $PokemonSystem.skip_move_learning },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.skip_move_learning = value }
-})
+  MenuHandlers.add(:options_menu, :skip_move_learning, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Saltar aprender Movs."),
+    "order"       => 81,
+    "type"        => :array,
+    "parameters"  => [_INTL("Sí"), _INTL("No")],
+    "description" => _INTL("Elige si quieres saltarte el aprendizaje de movimientos al subir de nivel.\nPuedes aprenderlos más tarde desde el recordador de movimientos."),
+    "condition"   => proc { next Settings::ALLOW_SKIPPING_MOVE_LEARNING },
+    "get_proc"    => proc { next $PokemonSystem.skip_move_learning },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.skip_move_learning = value }
+  })
 
-#-------------------------------------------------------------------------------
+  #-------------------------------------------------------------------------------
 
-MenuHandlers.add(:options_menu, :main_volume, {
-  "page"        => :audio,
-  "name"        => _INTL("Volumen general"),
-  "order"       => 10,
-  "type"        => :number_slider,
-  "parameters"  => [0, 100, 5],   # [minimum_value, maximum_value, interval]
-  "description" => _INTL("Ajusta el volumen de todos los audio en el juego."),
-  "get_proc"    => proc { next $PokemonSystem.main_volume },
-  "set_proc"    => proc { |value, screen| $PokemonSystem.main_volume = value }
-})
+  MenuHandlers.add(:options_menu, :main_volume, {
+    "page"        => :audio,
+    "name"        => _INTL("Volumen general"),
+    "order"       => 10,
+    "type"        => :number_slider,
+    "parameters"  => [0, 100, 5],   # [minimum_value, maximum_value, interval]
+    "description" => _INTL("Ajusta el volumen de todos los audio en el juego."),
+    "get_proc"    => proc { next $PokemonSystem.main_volume },
+    "set_proc"    => proc { |value, screen| $PokemonSystem.main_volume = value }
+  })
 
-MenuHandlers.add(:options_menu, :bgm_volume, {
-  "page"        => :audio,
-  "name"        => _INTL("Música de fondo"),
-  "order"       => 20,
-  "type"        => :number_slider,
-  "parameters"  => [0, 100, 5],   # [minimum_value, maximum_value, interval]
-  "description" => _INTL("Ajusta el volumen de la música de fondo."),
-  "get_proc"    => proc { next $PokemonSystem.bgmvolume },
-  "set_proc"    => proc { |value, screen| $PokemonSystem.bgmvolume = value }
-})
+  MenuHandlers.add(:options_menu, :bgm_volume, {
+    "page"        => :audio,
+    "name"        => _INTL("Música de fondo"),
+    "order"       => 20,
+    "type"        => :number_slider,
+    "parameters"  => [0, 100, 5],   # [minimum_value, maximum_value, interval]
+    "description" => _INTL("Ajusta el volumen de la música de fondo."),
+    "get_proc"    => proc { next $PokemonSystem.bgmvolume },
+    "set_proc"    => proc { |value, screen| $PokemonSystem.bgmvolume = value }
+  })
 
-MenuHandlers.add(:options_menu, :se_volume, {
-  "page"        => :audio,
-  "name"        => _INTL("Efectos de sonido"),
-  "order"       => 30,
-  "type"        => :number_slider,
-  "parameters"  => [0, 100, 5],   # [minimum_value, maximum_value, interval]
-  "description" => _INTL("Ajusta el volumen de los efectos de sonido."),
-  "get_proc"    => proc { next $PokemonSystem.sevolume },
-  "set_proc"    => proc { |value, _screen|
-    next if $PokemonSystem.sevolume == value
-    $PokemonSystem.sevolume = value
-    pbPlayCursorSE
-  }
-})
+  MenuHandlers.add(:options_menu, :se_volume, {
+    "page"        => :audio,
+    "name"        => _INTL("Efectos de sonido"),
+    "order"       => 30,
+    "type"        => :number_slider,
+    "parameters"  => [0, 100, 5],   # [minimum_value, maximum_value, interval]
+    "description" => _INTL("Ajusta el volumen de los efectos de sonido."),
+    "get_proc"    => proc { next $PokemonSystem.sevolume },
+    "set_proc"    => proc { |value, _screen|
+      next if $PokemonSystem.sevolume == value
+      $PokemonSystem.sevolume = value
+      pbPlayCursorSE
+    }
+  })
 
-MenuHandlers.add(:options_menu, :pokemon_cry_volume, {
-  "page"        => :audio,
-  "name"        => _INTL("Volumen gritos Pkmn."),
-  "order"       => 40,
-  "type"        => :number_slider,
-  "parameters"  => [0, 100, 5],   # [minimum_value, maximum_value, interval]
-  "description" => _INTL("Ajusta el volumen de los gritos de los Pokémon."),
-  "get_proc"    => proc { next $PokemonSystem.pokemon_cry_volume },
-  "set_proc"    => proc { |value, _screen|
-    next if $PokemonSystem.pokemon_cry_volume == value
-    $PokemonSystem.pokemon_cry_volume = value
-    pbPlayCursorSE
-  }
-})
+  MenuHandlers.add(:options_menu, :pokemon_cry_volume, {
+    "page"        => :audio,
+    "name"        => _INTL("Volumen gritos Pkmn."),
+    "order"       => 40,
+    "type"        => :number_slider,
+    "parameters"  => [0, 100, 5],   # [minimum_value, maximum_value, interval]
+    "description" => _INTL("Ajusta el volumen de los gritos de los Pokémon."),
+    "get_proc"    => proc { next $PokemonSystem.pokemon_cry_volume },
+    "set_proc"    => proc { |value, _screen|
+      next if $PokemonSystem.pokemon_cry_volume == value
+      $PokemonSystem.pokemon_cry_volume = value
+      pbPlayCursorSE
+    }
+  })
 
-#-------------------------------------------------------------------------------
+  #-------------------------------------------------------------------------------
 
-MenuHandlers.add(:options_menu, :battle_animations, {
-  "page"        => :graphics,
-  "name"        => _INTL("Efectos de combate"),
-  "order"       => 20,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Sí"), _INTL("No")] },
-  "description" => _INTL("Elige si deseas ver las animaciones de movimiento en batalla."),
-  "get_proc"    => proc { next $PokemonSystem.battlescene },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.battlescene = value }
-})
+  MenuHandlers.add(:options_menu, :battle_animations, {
+    "page"        => :graphics,
+    "name"        => _INTL("Efectos de combate"),
+    "order"       => 20,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Sí"), _INTL("No")] },
+    "description" => _INTL("Elige si deseas ver las animaciones de movimiento en batalla."),
+    "get_proc"    => proc { next $PokemonSystem.battlescene },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.battlescene = value }
+  })
 
-MenuHandlers.add(:options_menu, :speech_frame, {
-  "page"        => :graphics,
-  "name"        => _INTL("Marco de diálogo"),
-  "order"       => 30,
-  "type"        => :number_type,
-  "parameters"  => 1..Settings::SPEECH_WINDOWSKINS.length,
-  "description" => _INTL("Elige la apariencia de los cuadros de diálogo."),
-  "condition"   => proc { next Settings::SPEECH_WINDOWSKINS.length > 1 },
-  "get_proc"    => proc { next $PokemonSystem.textskin },
-  "set_proc"    => proc { |value, screen|
-    $PokemonSystem.textskin = value
-    # Change the windowskin of the options text box to selected one
-    screen.sprites[:speech_box].setSkin(MessageConfig.pbGetSpeechFrame)
-  }
-})
+  MenuHandlers.add(:options_menu, :speech_frame, {
+    "page"        => :graphics,
+    "name"        => _INTL("Marco de diálogo"),
+    "order"       => 30,
+    "type"        => :number_type,
+    "parameters"  => 1..Settings::SPEECH_WINDOWSKINS.length,
+    "description" => _INTL("Elige la apariencia de los cuadros de diálogo."),
+    "condition"   => proc { next Settings::SPEECH_WINDOWSKINS.length > 1 },
+    "get_proc"    => proc { next $PokemonSystem.textskin },
+    "set_proc"    => proc { |value, screen|
+      $PokemonSystem.textskin = value
+      # Change the windowskin of the options text box to selected one
+      screen.sprites[:speech_box].setSkin(MessageConfig.pbGetSpeechFrame)
+    }
+  })
 
-MenuHandlers.add(:options_menu, :menu_frame, {
-  "page"        => :graphics,
-  "name"        => _INTL("Marco de menú"),
-  "order"       => 40,
-  "type"        => :number_type,
-  "parameters"  => 1..Settings::MENU_WINDOWSKINS.length,
-  "description" => _INTL("Elige la apariencia de los menús del juego."),
-  "condition"   => proc { next Settings::MENU_WINDOWSKINS.length > 1 },
-  "get_proc"    => proc { next $PokemonSystem.frame },
-  "set_proc"    => proc { |value, screen|
-    $PokemonSystem.frame = value
-    # Change the windowskin of the options text box to selected one
-    screen.sprites[:options_list].setSkin(MessageConfig.pbGetSystemFrame)
-  }
-})
+  MenuHandlers.add(:options_menu, :menu_frame, {
+    "page"        => :graphics,
+    "name"        => _INTL("Marco de menú"),
+    "order"       => 40,
+    "type"        => :number_type,
+    "parameters"  => 1..Settings::MENU_WINDOWSKINS.length,
+    "description" => _INTL("Elige la apariencia de los menús del juego."),
+    "condition"   => proc { next Settings::MENU_WINDOWSKINS.length > 1 },
+    "get_proc"    => proc { next $PokemonSystem.frame },
+    "set_proc"    => proc { |value, screen|
+      $PokemonSystem.frame = value
+      # Change the windowskin of the options text box to selected one
+      screen.sprites[:options_list].setSkin(MessageConfig.pbGetSystemFrame)
+    }
+  })
 
-MenuHandlers.add(:options_menu, :screen_size, {
-  "page"        => :graphics,
-  "name"        => _INTL("Tamaño de ventana"),
-  "order"       => 50,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("S"), _INTL("M"), _INTL("L"), _INTL("XL"), _INTL("Completa")] },
-  "description" => _INTL("Elije el tamaño de la ventana del juego."),
-  "get_proc"    => proc { next [$PokemonSystem.screensize, 4].min },
-  "set_proc"    => proc { |value, _screen| $PokemonSystem.screensize = value }
-})
+  MenuHandlers.add(:options_menu, :screen_size, {
+    "page"        => :graphics,
+    "name"        => _INTL("Tamaño de ventana"),
+    "order"       => 50,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("S"), _INTL("M"), _INTL("L"), _INTL("XL"), _INTL("Completa")] },
+    "description" => _INTL("Elije el tamaño de la ventana del juego."),
+    "get_proc"    => proc { next [$PokemonSystem.screensize, 4].min },
+    "set_proc"    => proc { |value, _screen| $PokemonSystem.screensize = value }
+  })
 
-MenuHandlers.add(:options_menu, :vsync, {
-  "page"        => :graphics,
-  "name"        => _INTL("VSync"),
-  "order"       => 60,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Sí"), _INTL("No")] },
-  "condition"   => proc { next !$joiplay },
-  "description" => _INTL("Si el juego va muy rápido desactiva el VSync.\nRequiere reiniciar el juego"),
-  "get_proc"    => proc { next $PokemonSystem.vsync },
-  "set_proc"    => proc { |value, _scene|
-    next if $PokemonSystem.vsync == value
-    $PokemonSystem.vsync = value
-    $PokemonSystem.update_vsync($PokemonSystem.vsync)
-  }
-})
+  MenuHandlers.add(:options_menu, :vsync, {
+    "page"        => :graphics,
+    "name"        => _INTL("VSync"),
+    "order"       => 60,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Sí"), _INTL("No")] },
+    "condition"   => proc { next !$joiplay },
+    "description" => _INTL("Si el juego va muy rápido desactiva el VSync.\nRequiere reiniciar el juego"),
+    "get_proc"    => proc { next $PokemonSystem.vsync },
+    "set_proc"    => proc { |value, _scene|
+      next if $PokemonSystem.vsync == value
+      $PokemonSystem.vsync = value
+      $PokemonSystem.update_vsync($PokemonSystem.vsync)
+    }
+  })
 
-MenuHandlers.add(:options_menu, :autotile_animations, {
-  "page"        => :graphics,
-  "name"        => _INTL("Anim. de mapas"),
-  "order"       => 70,
-  "type"        => :array,
-  "parameters"  => proc { [_INTL("Sí"), _INTL("No")] },
-  "description" => _INTL("Activa o desactiva las animaciones de los mapas."),
-  "get_proc"    => proc { next $PokemonSystem.autotile_animations || 0 },
-  "set_proc"    => proc { |value, _scene| $PokemonSystem.autotile_animations = value }
-})
+  MenuHandlers.add(:options_menu, :autotile_animations, {
+    "page"        => :graphics,
+    "name"        => _INTL("Anim. de mapas"),
+    "order"       => 70,
+    "type"        => :array,
+    "parameters"  => proc { [_INTL("Sí"), _INTL("No")] },
+    "description" => _INTL("Activa o desactiva las animaciones de los mapas."),
+    "get_proc"    => proc { next $PokemonSystem.autotile_animations || 0 },
+    "set_proc"    => proc { |value, _scene| $PokemonSystem.autotile_animations = value }
+  })
 
-#-------------------------------------------------------------------------------
+  #-------------------------------------------------------------------------------
 
-# MenuHandlers.add(:options_menu, :control_up, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Arriba"),
-#   "order"       => 10,
-#   "type"        => :control,
-#   "parameters"  => Input::UP,
-#   "description" => _INTL("Movimiento hacia arriba del personaje o en menús. [Also: Arriba]"),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::UP] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::UP] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_up, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Arriba"),
+  #   "order"       => 10,
+  #   "type"        => :control,
+  #   "parameters"  => Input::UP,
+  #   "description" => _INTL("Movimiento hacia arriba del personaje o en menús. [Also: Arriba]"),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::UP] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::UP] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :control_left, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Izquierda"),
-#   "order"       => 20,
-#   "type"        => :control,
-#   "parameters"  => Input::LEFT,
-#   "description" => _INTL("Movimiento hacia la izquierda del personaje o en menús. [Also: Izquierda]"),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::LEFT] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::LEFT] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_left, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Izquierda"),
+  #   "order"       => 20,
+  #   "type"        => :control,
+  #   "parameters"  => Input::LEFT,
+  #   "description" => _INTL("Movimiento hacia la izquierda del personaje o en menús. [Also: Izquierda]"),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::LEFT] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::LEFT] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :control_down, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Abajo"),
-#   "order"       => 30,
-#   "type"        => :control,
-#   "parameters"  => Input::DOWN,
-#   "description" => _INTL("Movimiento hacia abajo del personaje o en menús. [Also: Abajo]"),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::DOWN] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::DOWN] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_down, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Abajo"),
+  #   "order"       => 30,
+  #   "type"        => :control,
+  #   "parameters"  => Input::DOWN,
+  #   "description" => _INTL("Movimiento hacia abajo del personaje o en menús. [Also: Abajo]"),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::DOWN] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::DOWN] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :control_right, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Derecha"),
-#   "order"       => 40,
-#   "type"        => :control,
-#   "parameters"  => Input::RIGHT,
-#   "description" => _INTL("Movimiento hacia la derecha del personaje o en menús. [También: Derecha]"),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::RIGHT] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::RIGHT] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_right, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Derecha"),
+  #   "order"       => 40,
+  #   "type"        => :control,
+  #   "parameters"  => Input::RIGHT,
+  #   "description" => _INTL("Movimiento hacia la derecha del personaje o en menús. [También: Derecha]"),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::RIGHT] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::RIGHT] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :control_use, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Usar/Seleccionar"),
-#   "order"       => 50,
-#   "type"        => :control,
-#   "parameters"  => Input::USE,
-#   "description" => _INTL("Interactuar o Confirmar. [También: Enter, Espacio]"),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::USE] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::USE] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_use, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Usar/Seleccionar"),
+  #   "order"       => 50,
+  #   "type"        => :control,
+  #   "parameters"  => Input::USE,
+  #   "description" => _INTL("Interactuar o Confirmar. [También: Enter, Espacio]"),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::USE] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::USE] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :control_back, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Atrás"),
-#   "order"       => 60,
-#   "type"        => :control,
-#   "parameters"  => Input::BACK,
-#   "description" => _INTL("Sale del menú y cancela interacciones. [También: X/Esc]"),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::BACK] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::BACK] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_back, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Atrás"),
+  #   "order"       => 60,
+  #   "type"        => :control,
+  #   "parameters"  => Input::BACK,
+  #   "description" => _INTL("Sale del menú y cancela interacciones. [También: X/Esc]"),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::BACK] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::BACK] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :control_action, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Acción"),
-#   "order"       => 70,
-#   "type"        => :control,
-#   "parameters"  => Input::ACTION,
-#   "description" => _INTL("Cambia el comportamiento de ciertas interacciones en el juego. (Default: Z)"),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::ACTION] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::ACTION] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_action, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Acción"),
+  #   "order"       => 70,
+  #   "type"        => :control,
+  #   "parameters"  => Input::ACTION,
+  #   "description" => _INTL("Cambia el comportamiento de ciertas interacciones en el juego. (Default: Z)"),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::ACTION] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::ACTION] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :control_jump_up, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Subir Rápido"),
-#   "order"       => 80,
-#   "type"        => :control,
-#   "parameters"  => Input::QUICK_UP,
-#   "description" => _INTL("Permite avanzar más rápidamente hacia arriba en los menús."),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::QUICK_UP] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::QUICK_UP] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_jump_up, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Subir Rápido"),
+  #   "order"       => 80,
+  #   "type"        => :control,
+  #   "parameters"  => Input::QUICK_UP,
+  #   "description" => _INTL("Permite avanzar más rápidamente hacia arriba en los menús."),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::QUICK_UP] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::QUICK_UP] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :control_jump_down, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Av. Página"),
-#   "order"       => 90,
-#   "type"        => :control,
-#   "parameters"  => Input::QUICK_DOWN,
-#   "description" => _INTL("Permite avanzar más rápidamente hacia abajo en los menús."),
-#   "get_proc"    => proc { next $PokemonSystem.controls[Input::QUICK_DOWN] },
-#   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::QUICK_DOWN] = value },
-#   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
-# })
+  # MenuHandlers.add(:options_menu, :control_jump_down, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Av. Página"),
+  #   "order"       => 90,
+  #   "type"        => :control,
+  #   "parameters"  => Input::QUICK_DOWN,
+  #   "description" => _INTL("Permite avanzar más rápidamente hacia abajo en los menús."),
+  #   "get_proc"    => proc { next $PokemonSystem.controls[Input::QUICK_DOWN] },
+  #   "set_proc"    => proc { |value, _screen| $PokemonSystem.controls[Input::QUICK_DOWN] = value },
+  #   "use_proc"    => proc { |screen| screen.visuals.change_key_or_button }
+  # })
 
-# MenuHandlers.add(:options_menu, :reset_controls, {
-#   "page"        => :controls,
-#   "name"        => _INTL("Resetear Controles"),
-#   "order"       => 900,
-#   "type"        => :use,
-#   "description" => _INTL("Restablece los controles a sus valores predeterminados."),
-#   "use_proc"    => proc { |screen|
-#     $PokemonSystem.reset_controls
-#     screen.sprites[:options_list].get_values
-#     screen.refresh
-#     Input.update
-#   }
-# })
+  # MenuHandlers.add(:options_menu, :reset_controls, {
+  #   "page"        => :controls,
+  #   "name"        => _INTL("Resetear Controles"),
+  #   "order"       => 900,
+  #   "type"        => :use,
+  #   "description" => _INTL("Restablece los controles a sus valores predeterminados."),
+  #   "use_proc"    => proc { |screen|
+  #     $PokemonSystem.reset_controls
+  #     screen.sprites[:options_list].get_values
+  #     screen.refresh
+  #     Input.update
+  #   }
+  # })
+end

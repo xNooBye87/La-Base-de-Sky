@@ -158,6 +158,9 @@ class EnumOption
 
   def initialize(name, values, get_proc, set_proc)
     @name     = name
+    values = values.call if values.is_a?(Proc)
+    values = [] if values.nil?
+    values = [values] unless values.is_a?(Array)
     @values   = values.map { |val| _INTL(val) }
     @get_proc = get_proc
     @set_proc = set_proc
