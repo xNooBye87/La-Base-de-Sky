@@ -1196,5 +1196,9 @@ class Battle
     return check_type if effective_types.include?(check_type)
     return effective_types.sample
   end
+
+  def disablePokeBalls
+    return @rules[:disable_poke_balls]
+  end
 end
 
