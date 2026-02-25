@@ -591,7 +591,7 @@ class PokemonPokedexInfo_Scene
       [_INTL("Ataque"),    STATS_LABEL_X, STATS_LABEL_Y2, :left, base, shadow, :outline],
       [_INTL("Defensa"),   STATS_LABEL_X, STATS_LABEL_Y3, :left, base, shadow, :outline],
       [_INTL("At. Esp."),  STATS_LABEL_X, STATS_LABEL_Y4, :left, base, shadow, :outline],
-      [_INTL("Df. Esp."),  STATS_LABEL_X, STATS_LABEL_Y5, :left, base, shadow, :outline],
+      [_INTL("Def. Esp."),  STATS_LABEL_X, STATS_LABEL_Y5, :left, base, shadow, :outline],
       [_INTL("Velocid."),  STATS_LABEL_X, STATS_LABEL_Y6, :left, base, shadow, :outline]
     )
     stats_order = [:HP, :ATTACK, :DEFENSE, :SPECIAL_ATTACK, :SPECIAL_DEFENSE, :SPEED]

@@ -557,8 +557,8 @@ module Settings
   # carpeta Data llamados messages_FRAGMENT_core.dat y messages_FRAGMENT_game.dat 
   # (en caso de que existan).
   LANGUAGES = [
-#    ["Español", "español"],
-#    ["English", "english"]
+    ["Español", "español"],
+    ["English", "english"]
   ]
 
   #=============================================================================

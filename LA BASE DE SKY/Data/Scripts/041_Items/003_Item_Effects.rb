@@ -1211,7 +1211,7 @@ ItemHandlers::UseOnPokemonMaximum.add(:KELPSYBERRY, proc { |item, pkmn|
 ItemHandlers::UseOnPokemon.add(:KELPSYBERRY, proc { |item, qty, pkmn, scene|
   next pbRaiseHappinessAndLowerEV(
     pkmn, scene, :ATTACK, qty, [
-      _INTL("¡{1} te adora! ¡Su Aataque base bajó!", pkmn.name),
+      _INTL("¡{1} te adora! ¡Su Ataque base bajó!", pkmn.name),
       _INTL("{1} se ha vuelto más amable. ¡Su Ataque de base ya no puede bajar más!", pkmn.name),
       _INTL("{1} se ha vuelto más amable. ¡Pero tiene menos Ataque de base!", pkmn.name)
     ]

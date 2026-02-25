@@ -275,7 +275,7 @@ MenuHandlers.add(:debug_menu, :item_ball_print_all, {
       pbDisposeMessageWindow(msgwindow)
       next
     end
-    receive_items = pbConfirmMessage(_INTL("¿Quieres imprimir tambien los objetos que dan los NPCs? (pbReceiveItem)"))
+    receive_items = pbConfirmMessage(_INTL("¿Quieres imprimir también los objetos que dan los NPCs? (pbReceiveItem)"))
     pbMessageDisplay(msgwindow,_INTL("Por favor, espera.\\wtnp[0]"))
     ItemBallPrinter.generate_txt(:item_balls)
     ItemBallPrinter.generate_txt(:receive_items) if receive_items

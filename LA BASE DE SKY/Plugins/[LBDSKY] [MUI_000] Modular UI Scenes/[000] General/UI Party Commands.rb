@@ -104,7 +104,7 @@ class PokemonPartyScreen
             pbDisplay(_INTL("No tiene suficientes PS..."))
             next
           end
-          @scene.pbSetHelpText(_INTL("¿Usar en que Pokémon?"))
+          @scene.pbSetHelpText(_INTL("¿Usar en qué Pokémon?"))
           old_party_idx = party_idx
           loop do
             @scene.pbPreSelect(old_party_idx)

@@ -586,7 +586,7 @@ Battle::ItemEffects::StatusCure.add(:PECHABERRY,
     PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}") if forced
     battle.pbCommonAnimation("EatBerry", battler) if !forced
     battler.pbCureStatus(forced)
-    battle.pbDisplay(_INTL("¡{1} se ha curado del envenienmiento con {2}!", battler.pbThis, itemName)) if !forced
+    battle.pbDisplay(_INTL("¡{1} se ha curado del envenenamiento con {2}!", battler.pbThis, itemName)) if !forced
     next true
   }
 )
@@ -690,7 +690,7 @@ Battle::ItemEffects::CopyStatChanges.add(:MIRRORHERB,
         battler.pbRaiseStatStage(stat, increment, battler)
       end
     end
-    battle.pbDisplay(_INTL("¡{1} se consumió...", battler.itemName))
+    battle.pbDisplay(_INTL("¡{1} se consumió!...", battler.itemName))
     battler.pbHeldItemTriggered(item)
   }
 )
