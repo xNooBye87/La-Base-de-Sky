@@ -451,7 +451,7 @@ end
 #===============================================================================
 def pbDoEnsureBitmap(bitmap, dwidth, dheight)
   if !bitmap || bitmap.disposed? || bitmap.width < dwidth || bitmap.height < dheight
-    oldfont = (bitmap && !bitmap.disposed?) ? bitmap.font : nil
+    oldfont = (bitmap && !bitmap.disposed?) ? bitmap.font.clone : nil
     bitmap&.dispose
     bitmap = Bitmap.new([1, dwidth].max, [1, dheight].max)
     (oldfont) ? bitmap.font = oldfont : pbSetSystemFont(bitmap)

@@ -209,7 +209,7 @@ module PageHandlers
     # Check if there are any MenuHandlers registered for this page
     has_menu_handlers = false
     MenuHandlers.each(menu) do |option, hash|
-      if hash["page"] == page
+      if hash["page"] == page && (!hash["condition"] || hash["condition"].call)
         has_menu_handlers = true
         break
       end
