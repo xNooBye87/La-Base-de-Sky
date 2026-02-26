@@ -33,9 +33,6 @@ class PokemonSystem
   attr_accessor :vsync
   attr_accessor :autotile_animations
 
-  attr_accessor :my_multiselect_option
-  attr_accessor :my_multiselect_rows
-
   def initialize
     @battlestyle         = 0     # Battle style (0=switch, 1=set)
     @runstyle            = 0     # Default movement speed (0=walk, 1=run)
@@ -56,8 +53,6 @@ class PokemonSystem
     @screensize          = (Settings::SCREEN_SCALE * 2).floor - 1   # 0=half size, 1=full size, 2=full-and-a-half size, 3=double size
     @vsync               = vsync_initial_value?
     @autotile_animations = 0
-    @my_multiselect_option = [] # Array of selected indices
-    @my_multiselect_rows = [] # Array of selected rows
   end
 
   def vsync_initial_value?
@@ -2093,31 +2088,31 @@ if Settings::USE_NEW_OPTIONS_UI
   # })
 
   #-------------------------------------------------------------------------------
-  # MULTISELECT OPTION EXAMPLE
-  # This option type allows selecting multiple values from a list.
-  # Use LEFT/RIGHT arrows to navigate and ENTER/Z to toggle selections.
-  # Dynamically calculates how many items fit per page based on available width.
-  # Shows navigation arrows (< >) when there are more items to view.
+  # EJEMPLO OPCIÓN MULTISELECT
+  # Esta opción personalizada permite seleccionar múltiples valores de una lista.
+  # Usa las flechas IZQUIERDA/DERECHA para navegar y ENTER/Z para alternar selecciones.
+  # Calcula dinámicamente cuántos ítems caben por página según el ancho disponible.
+  # Muestra flechas de navegación (< >) cuando hay más ítems para ver.
   #-------------------------------------------------------------------------------
 
-  # # First, add a field to track the selections in PokemonSystem
-  # # In 010_PokemonSystem.rb or similar:
+  # # Primero, agrega un campo para rastrear las selecciones en PokemonSystem
+  # # En 010_PokemonSystem.rb o similar:
   # # attr_accessor :my_multiselect_option
   # #
-  # # In the initialize method:
-  # # @my_multiselect_option = [] # Array of selected indices
+  # # En el método initialize:
+  # # @my_multiselect_option = [] # Array de índices seleccionados
   #
-  MenuHandlers.add(:options_menu, :example_multiselect, {
-    "page"        => :gameplay,
-    "name"        => _INTL("Multi-option"),
-    "order"       => 100,
-    "type"        => :multiselect,
-    "parameters"  => [_INTL("A"), _INTL("B"), _INTL("C"), _INTL("Opción D"), _INTL("E"), _INTL("F"), _INTL("G")],
-    "description" => _INTL("Selecciona múltiples opciones. Usa flechas para navegar y Enter para marcar."),
-    "get_proc"    => proc { next $PokemonSystem.my_multiselect_option || [] },
-    "set_proc"    => proc { |value, _screen|
-      $PokemonSystem.my_multiselect_option = value
-      # value is an array of indices, e.g., [0, 2, 4] means options A, C, and E are selected
-    }
-  })
+  # MenuHandlers.add(:options_menu, :example_multiselect, {
+  #   "page"        => :gameplay,
+  #   "name"        => _INTL("Multi-opción"),
+  #   "order"       => 100,
+  #   "type"        => :multiselect,
+  #   "parameters"  => [_INTL("A"), _INTL("B"), _INTL("C"), _INTL("Opción D"), _INTL("E"), _INTL("F"), _INTL("G")],
+  #   "description" => _INTL("Selecciona múltiples opciones. Usa flechas para navegar y Enter para marcar."),
+  #   "get_proc"    => proc { next $PokemonSystem.my_multiselect_option || [] },
+  #   "set_proc"    => proc { |value, _screen|
+  #     $PokemonSystem.my_multiselect_option = value
+  #     # value is an array of indices, e.g., [0, 2, 4] means options A, C, and E are selected
+  #   }
+  # })
 end
