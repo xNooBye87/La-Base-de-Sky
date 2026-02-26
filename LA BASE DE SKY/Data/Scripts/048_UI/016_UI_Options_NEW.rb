@@ -33,6 +33,9 @@ class PokemonSystem
   attr_accessor :vsync
   attr_accessor :autotile_animations
 
+  attr_accessor :my_multiselect_option
+  attr_accessor :my_multiselect_rows
+
   def initialize
     @battlestyle         = 0     # Battle style (0=switch, 1=set)
     @runstyle            = 0     # Default movement speed (0=walk, 1=run)
@@ -53,6 +56,8 @@ class PokemonSystem
     @screensize          = (Settings::SCREEN_SCALE * 2).floor - 1   # 0=half size, 1=full size, 2=full-and-a-half size, 3=double size
     @vsync               = vsync_initial_value?
     @autotile_animations = 0
+    @my_multiselect_option = [] # Array of selected indices
+    @my_multiselect_rows = [] # Array of selected rows
   end
 
   def vsync_initial_value?
@@ -294,6 +299,11 @@ class UI::OptionsVisualsList < Window_DrawableCommand
   SELECTION_BRACKET_LEFT_PADDING = 2
   # Espaciado al dibujar corchetes de selección (derecha)
   SELECTION_BRACKET_RIGHT_PADDING = 0
+  # Espaciado horizontal entre items en multiselect
+  MULTISELECT_ITEM_SPACING = 8
+  # Note: For :array and :multiselect, spacing is calculated to distribute items evenly across available width.
+  # When scrolling, visible items are spaced as if they were the only items (original pre-scrolling behavior).
+  # Navigation arrows (< >) appear automatically when items don't fit.
 
   def initialize(x, y, width, height, viewport)
     @input_icons_bitmap = AnimatedBitmap.new(UI::OptionsVisuals::UI_FOLDER + "input_icons")
@@ -318,6 +328,8 @@ class UI::OptionsVisualsList < Window_DrawableCommand
     return @options&.length || 0
   end
 
+  #-----------------------------------------------------------------------------
+
   def options=(new_options)
     @options = new_options
     self.top_row = 0
@@ -329,6 +341,17 @@ class UI::OptionsVisualsList < Window_DrawableCommand
       @array_second_value_x = text_width if @array_second_value_x < text_width
     end
     @array_second_value_x += ARRAY_SPACING
+    # Calculate similar spacing for multiselect options with 2 items
+    @multiselect_second_value_x = 0
+    @options.each do |option|
+      next if option[:type] != :multiselect
+      items = get_multiselect_items(option)
+      next if items.length != 2
+      fixed_checkbox = get_checkbox_text(false)  # Fixed width for stable layout
+      text_width = self.contents.text_size(fixed_checkbox + items[0]).width
+      @multiselect_second_value_x = text_width if @multiselect_second_value_x < text_width
+    end
+    @multiselect_second_value_x += ARRAY_SPACING
     refresh
   end
 
@@ -340,7 +363,242 @@ class UI::OptionsVisualsList < Window_DrawableCommand
         lowest = lowest_value(option)
         val = val - lowest if val
       end
+      # For array, store selected index and scroll offset
+      if [:array, :array_one].include?(option[:type])
+        selected = val.is_a?(Integer) ? val : 0
+        val = { selected: selected, scroll: 0 }
+      end
+      # For multiselect, store current cursor position, selection array, and scroll offset
+      if option[:type] == :multiselect
+        selections = val.is_a?(Array) ? val : []
+        val = { cursor: 0, selections: selections, scroll: 0 }
+      end
       next val
+    end
+  end
+
+  # Helper method to get multiselect items from parameters
+  def get_multiselect_items(option)
+    params = option[:parameters]
+    return params if params.is_a?(Array) && !params[0].is_a?(Hash)
+    return params[:items] if params.is_a?(Hash) && params[:items]
+    return []
+  end
+
+  # Calculate how many array items fit in available width starting from a position
+  def calculate_array_visible(option, start_index, available_width)
+    items = option[:parameters]
+    return 0 if items.empty? || start_index >= items.length
+    
+    current_width = 0
+    visible_count = 0
+    
+    (start_index...items.length).each do |i|
+      item_text = items[i]
+      text_width = self.contents.text_size(item_text).width
+      # Don't add spacing here - distributed spacing will be calculated separately
+      
+      if current_width + text_width <= available_width
+        current_width += text_width
+        visible_count += 1
+      else
+        break  # Stop when we run out of space
+      end
+    end
+    
+    return [visible_count, 1].max  # Always show at least 1 item
+  end
+
+  # Calculate how many multiselect items fit in available width starting from a position
+  # Always uses a fixed checkbox string for layout so toggling selections never shifts page boundaries
+  def calculate_multiselect_visible(option, start_index, available_width, selections = [])
+    items = get_multiselect_items(option)
+    return 0 if items.empty? || start_index >= items.length
+    
+    fixed_checkbox = get_checkbox_text(false)  # Fixed width regardless of selection state
+    current_width = 0
+    visible_count = 0
+    
+    (start_index...items.length).each do |i|
+      text_value = fixed_checkbox + items[i]
+      text_width = self.contents.text_size(text_value).width
+      # Don't add spacing here - distributed spacing will be calculated separately
+      
+      if current_width + text_width <= available_width
+        current_width += text_width
+        visible_count += 1
+      else
+        break  # Stop when we run out of space
+      end
+    end
+    
+    return [visible_count, 1].max  # Always show at least 1 item
+  end
+
+  # Calculate ACTUAL visible count accounting for arrows and spacing (matches drawing code)
+  def calculate_actual_array_visible(option, scroll, available_width)
+    items = option[:parameters]
+    return 0 if items.empty? || scroll >= items.length
+    
+    left_arrow_width = self.contents.text_size("< ").width
+    right_arrow_width = self.contents.text_size(" >").width
+    has_previous = scroll > 0
+    
+    reserved_width = 0
+    reserved_width += left_arrow_width if has_previous
+    test_reserved_width = reserved_width + right_arrow_width
+    
+    visible_count = calculate_array_visible(option, scroll, available_width - test_reserved_width)
+    visible_end = [scroll + visible_count, items.length].min
+    has_next = visible_end < items.length
+    reserved_width += right_arrow_width if has_next
+    
+    visible_count = calculate_array_visible(option, scroll, available_width - reserved_width)
+    visible_end = [scroll + visible_count, items.length].min
+    has_next = visible_end < items.length
+    
+    # Reduce count if items don't fit with spacing (matches drawing logic)
+    visible_total_width = 0
+    (scroll...visible_end).each { |i| visible_total_width += self.contents.text_size(items[i]).width }
+    visible_available_width = available_width - reserved_width
+    
+    while visible_count > 1 && visible_total_width > visible_available_width
+      visible_count -= 1
+      visible_end = scroll + visible_count
+      has_next = visible_end < items.length
+      reserved_width = 0
+      reserved_width += left_arrow_width if has_previous
+      reserved_width += right_arrow_width if has_next
+      visible_available_width = available_width - reserved_width
+      visible_total_width = 0
+      (scroll...visible_end).each { |i| visible_total_width += self.contents.text_size(items[i]).width }
+    end
+    
+    return [visible_count, 1].max
+  end
+
+  # Calculate ACTUAL visible count for multiselect accounting for arrows and spacing
+  # Always uses a fixed checkbox string for layout so toggling selections never shifts page boundaries
+  def calculate_actual_multiselect_visible(option, scroll, available_width, selections = [])
+    items = get_multiselect_items(option)
+    return 0 if items.empty? || scroll >= items.length
+    
+    fixed_checkbox = get_checkbox_text(false)  # Fixed width regardless of selection state
+    left_arrow_width = self.contents.text_size("< ").width
+    right_arrow_width = self.contents.text_size(" >").width
+    has_previous = scroll > 0
+    
+    reserved_width = 0
+    reserved_width += left_arrow_width if has_previous
+    test_reserved_width = reserved_width + right_arrow_width
+    
+    visible_count = calculate_multiselect_visible(option, scroll, available_width - test_reserved_width, selections)
+    visible_end = [scroll + visible_count, items.length].min
+    has_next = visible_end < items.length
+    reserved_width += right_arrow_width if has_next
+    
+    visible_count = calculate_multiselect_visible(option, scroll, available_width - reserved_width, selections)
+    visible_end = [scroll + visible_count, items.length].min
+    has_next = visible_end < items.length
+    
+    # Reduce count if items don't fit with spacing (matches drawing logic)
+    visible_total_width = 0
+    (scroll...visible_end).each do |i|
+      visible_total_width += self.contents.text_size(fixed_checkbox + items[i]).width
+    end
+    visible_available_width = available_width - reserved_width
+    
+    while visible_count > 1 && visible_total_width > visible_available_width
+      visible_count -= 1
+      visible_end = scroll + visible_count
+      has_next = visible_end < items.length
+      reserved_width = 0
+      reserved_width += left_arrow_width if has_previous
+      reserved_width += right_arrow_width if has_next
+      visible_available_width = available_width - reserved_width
+      visible_total_width = 0
+      (scroll...visible_end).each do |i|
+        visible_total_width += self.contents.text_size(fixed_checkbox + items[i]).width
+      end
+    end
+    
+    return [visible_count, 1].max
+  end
+
+  # Helper method to ensure array scroll is consistent with selected item
+  def fix_array_scroll(this_index)
+    return unless [:array, :array_one].include?(@options[this_index][:type])
+    option = @options[this_index]
+    val = @values[this_index]
+    return unless val.is_a?(Hash)
+    
+    items = option[:parameters]
+    selected = val[:selected]
+    current_scroll = val[:scroll]
+    
+    # Calculate available width (half of the window minus some padding)
+    available_width = (self.width - self.borderX) / 2 - 40
+    
+    # Calculate how many items are ACTUALLY visible from current scroll (with arrows/spacing)
+    visible_count = calculate_actual_array_visible(option, current_scroll, available_width)
+    visible_end = current_scroll + visible_count
+    
+    # If selected is already visible, no need to change scroll
+    return if selected >= current_scroll && selected < visible_end
+    
+    # Selected is not visible, need to scroll by full pages (no overlap)
+    if selected >= visible_end
+      # Moving forward: jump to the start of the next page
+      @values[this_index][:scroll] = visible_end
+    else
+      # Moving backward: walk pages from 0 to find the page containing selected
+      new_scroll = 0
+      loop do
+        vc = calculate_actual_array_visible(option, new_scroll, available_width)
+        next_page = new_scroll + vc
+        break if selected < next_page  # selected is on this page
+        new_scroll = next_page
+      end
+      @values[this_index][:scroll] = new_scroll
+    end
+  end
+
+  # Helper method to ensure multiselect scroll is consistent with cursor
+  def fix_multiselect_scroll(this_index)
+    return unless @options[this_index][:type] == :multiselect
+    option = @options[this_index]
+    val = @values[this_index]
+    return unless val.is_a?(Hash)
+    
+    items = get_multiselect_items(option)
+    cursor = val[:cursor]
+    current_scroll = val[:scroll]
+    selections = val[:selections]
+    
+    # Calculate available width (half of the window minus some padding)
+    available_width = (self.width - self.borderX) / 2 - 40
+    
+    # Calculate how many items are ACTUALLY visible from current scroll (with arrows/spacing)
+    visible_count = calculate_actual_multiselect_visible(option, current_scroll, available_width, selections)
+    visible_end = current_scroll + visible_count
+    
+    # If cursor is already visible, no need to change scroll
+    return if cursor >= current_scroll && cursor < visible_end
+    
+    # Cursor is not visible, need to scroll by full pages (no overlap)
+    if cursor >= visible_end
+      # Moving forward: jump to the start of the next page
+      @values[this_index][:scroll] = visible_end
+    else
+      # Moving backward: walk pages from 0 to find the page containing cursor
+      new_scroll = 0
+      loop do
+        vc = calculate_actual_multiselect_visible(option, new_scroll, available_width, selections)
+        next_page = new_scroll + vc
+        break if cursor < next_page  # cursor is on this page
+        new_scroll = next_page
+      end
+      @values[this_index][:scroll] = new_scroll
     end
   end
 
@@ -384,11 +642,29 @@ class UI::OptionsVisualsList < Window_DrawableCommand
 
   def previous_value(this_index)
     option = @options[this_index]
-    # Early return for array types when at minimum (no cycling for arrays)
-    return @values[this_index] if @values[this_index] == 0 && [:array, :array_one].include?(option[:type])
     case option[:type]
     when :array, :array_one
-      return @values[this_index] - 1
+      current_selected = @values[this_index][:selected]
+      current_scroll = @values[this_index][:scroll]
+      # Wrap around if at start
+      new_selected = current_selected - 1
+      if new_selected < 0
+        new_selected = option[:parameters].length - 1
+      end
+      return { selected: new_selected, scroll: current_scroll }
+    when :multiselect
+      items = get_multiselect_items(option)
+      current_cursor = @values[this_index][:cursor]
+      current_scroll = @values[this_index][:scroll]
+      
+      new_cursor = current_cursor - 1
+      # Wrap around if at start
+      if new_cursor < 0
+        new_cursor = items.length - 1
+      end
+      
+      # Scroll will be adjusted by fix_multiselect_scroll
+      return { cursor: new_cursor, selections: @values[this_index][:selections], scroll: current_scroll }
     when :number_type
       case option[:parameters]
       when Range
@@ -424,7 +700,27 @@ class UI::OptionsVisualsList < Window_DrawableCommand
     option = @options[this_index]
     case option[:type]
     when :array, :array_one
-      return @values[this_index] + 1 if @values[this_index] < option[:parameters].length - 1
+      current_selected = @values[this_index][:selected]
+      current_scroll = @values[this_index][:scroll]
+      # Wrap around if at end
+      new_selected = current_selected + 1
+      if new_selected >= option[:parameters].length
+        new_selected = 0
+      end
+      return { selected: new_selected, scroll: current_scroll }
+    when :multiselect
+      items = get_multiselect_items(option)
+      current_cursor = @values[this_index][:cursor]
+      current_scroll = @values[this_index][:scroll]
+      
+      new_cursor = current_cursor + 1
+      # Wrap around if at end
+      if new_cursor >= items.length
+        new_cursor = 0
+      end
+      
+      # Scroll will be adjusted by fix_multiselect_scroll
+      return { cursor: new_cursor, selections: @values[this_index][:selections], scroll: current_scroll }
     when :number_type
       case option[:parameters]
       when Range
@@ -464,6 +760,14 @@ class UI::OptionsVisualsList < Window_DrawableCommand
     if option[:type] == :number_slider || (option[:type] == :number_type && option[:parameters].is_a?(Array))
       lowest = lowest_value(option)
       val = val + lowest if val
+    end
+    # For array, return only the selected index
+    if [:array, :array_one].include?(option[:type])
+      val = val[:selected] if val.is_a?(Hash)
+    end
+    # For multiselect, return only the selections array
+    if option[:type] == :multiselect
+      val = val[:selections] if val.is_a?(Hash)
     end
     return val
   end
@@ -512,21 +816,121 @@ class UI::OptionsVisualsList < Window_DrawableCommand
     option = @options[this_index]
     case option[:type]
     when :array
-      total_width = 0
-      option[:parameters].each { |value| total_width += self.contents.text_size(value).width }
-      spacing = (rect.width - option_start_x - total_width) / (option[:parameters].length - 1)
-      spacing = 0 if spacing < 0
-      x_pos = option_start_x
-      option[:parameters].each_with_index do |value, i|
-        pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
-                         value,
-                         (i == @values[this_index]) ? self.selectedColor : self.baseColor,
-                         (i == @values[this_index]) ? self.selectedShadowColor : self.shadowColor)
-        # draw_selection_brackets(x_pos, rect.y, value, rect, option_width) if i == @values[this_index]
-        if option[:parameters].length == 2
-          x_pos += @array_second_value_x
-        else
-          x_pos += self.contents.text_size(value).width + spacing
+      items = option[:parameters]
+      scroll = @values[this_index][:scroll]
+      selected = @values[this_index][:selected]
+      
+      # Calculate available width for items (matches spacing calculation)
+      available_width = rect.width - option_start_x
+      
+      # Check if all items actually fit WITH realistic spacing
+      # Calculate total width including minimum spacing between items
+      total_text_width = 0
+      items.each { |v| total_text_width += self.contents.text_size(v).width }
+      min_realistic_spacing = items.length > 1 ? (items.length - 1) * 16 : 0  # 16px minimum between items
+      all_items_fit = (total_text_width + min_realistic_spacing <= available_width)
+      
+      if all_items_fit
+        # All items fit - draw them all with distributed spacing
+        total_width = 0
+        items.each { |v| total_width += self.contents.text_size(v).width }
+        spacing = 0
+        if items.length > 1
+          spacing = (rect.width - option_start_x - total_width) / (items.length - 1)
+          spacing = 0 if spacing < 0
+        end
+        x_pos = option_start_x
+        items.each_with_index do |value, i|
+          pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
+                           value,
+                           (i == selected) ? self.selectedColor : self.baseColor,
+                           (i == selected) ? self.selectedShadowColor : self.shadowColor)
+          # Use special spacing for 2-item arrays
+          if items.length == 2 && i == 0
+            x_pos += @array_second_value_x
+          else
+            x_pos += self.contents.text_size(value).width + spacing
+          end
+        end
+      else
+        # Scrolling logic - show subset with arrows
+        x_pos = option_start_x
+        left_arrow_width = self.contents.text_size("< ").width
+        right_arrow_width = self.contents.text_size(" >").width
+        
+        # Determine if we need arrows based on scroll position and total items
+        has_previous = scroll > 0
+        
+        # Calculate reserved width for arrows
+        reserved_width = 0
+        reserved_width += left_arrow_width if has_previous
+        
+        # Always reserve space for right arrow to calculate if we need it
+        test_reserved_width = reserved_width + right_arrow_width
+        visible_count = calculate_array_visible(option, scroll, available_width - test_reserved_width)
+        visible_end = [scroll + visible_count, items.length].min
+        has_next = visible_end < items.length
+        
+        # Set final reserved width based on which arrows we actually need
+        reserved_width += right_arrow_width if has_next
+        
+        # Recalculate visible count with correct reserved width
+        visible_count = calculate_array_visible(option, scroll, available_width - reserved_width)
+        visible_end = [scroll + visible_count, items.length].min
+        # Recalculate has_next with the final visible_end
+        has_next = visible_end < items.length
+        
+        # Calculate spacing based on VISIBLE items only (original behavior)
+        visible_total_width = 0
+        (scroll...visible_end).each { |i| visible_total_width += self.contents.text_size(items[i]).width }
+        visible_available_width = available_width - reserved_width
+        
+        # Check if items actually fit with distributed spacing + arrows
+        # If not, reduce visible count until they fit
+        while visible_count > 1 && visible_total_width > visible_available_width
+          visible_count -= 1
+          visible_end = scroll + visible_count
+          has_next = visible_end < items.length
+          # Recalculate reserved width
+          reserved_width = 0
+          reserved_width += left_arrow_width if has_previous
+          reserved_width += right_arrow_width if has_next
+          visible_available_width = available_width - reserved_width
+          # Recalculate total width
+          visible_total_width = 0
+          (scroll...visible_end).each { |i| visible_total_width += self.contents.text_size(items[i]).width }
+        end
+        
+        visible_spacing = 0
+        if visible_count > 1
+          visible_spacing = (visible_available_width - visible_total_width) / (visible_count - 1)
+          visible_spacing = 0 if visible_spacing < 0
+        end
+        
+        # Draw left arrow if there are previous items
+        if has_previous
+          pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
+                           "< ", self.baseColor, self.shadowColor)
+          x_pos += left_arrow_width
+        end
+        
+        # Draw visible items with spacing calculated from visible items only
+        (scroll...visible_end).each do |i|
+          value = items[i]
+          is_selected = (i == selected)
+          
+          pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
+                           value,
+                           is_selected ? self.selectedColor : self.baseColor,
+                           is_selected ? self.selectedShadowColor : self.shadowColor)
+          x_pos += self.contents.text_size(value).width
+          x_pos += visible_spacing if i < visible_end - 1
+        end
+        
+        # Draw right arrow if there are more items
+        if has_next
+          pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
+                           " >", self.baseColor, self.shadowColor)
         end
       end
     when :number_type
@@ -570,11 +974,174 @@ class UI::OptionsVisualsList < Window_DrawableCommand
       end
     when :use
       # Draw nothing
+    when :multiselect
+      items = get_multiselect_items(option)
+      scroll = @values[this_index][:scroll]
+      cursor_index = @values[this_index][:cursor]
+      selections = @values[this_index][:selections]
+      
+      # Calculate available width for items (matches spacing calculation)
+      available_width = rect.width - option_start_x
+      
+      # Use a fixed checkbox string for all layout/width decisions so toggling
+      # selections never causes all_items_fit to flip and arrows to appear/disappear
+      fixed_checkbox = get_checkbox_text(false)
+      
+      # Check if all items actually fit WITH realistic spacing
+      # Calculate total width including minimum spacing between items
+      total_text_width = 0
+      items.each_with_index do |v, i|
+        total_text_width += self.contents.text_size(fixed_checkbox + v).width
+      end
+      min_realistic_spacing = items.length > 1 ? (items.length - 1) * 16 : 0  # 16px minimum between items
+      all_items_fit = (total_text_width + min_realistic_spacing <= available_width)
+      
+      if all_items_fit
+        # All items fit - draw them all with distributed spacing
+        # Use fixed checkbox for spacing calculation to keep layout stable
+        total_width = 0
+        items.each_with_index do |v, i|
+          total_width += self.contents.text_size(fixed_checkbox + v).width
+        end
+        spacing = 0
+        if items.length > 1
+          spacing = (rect.width - option_start_x - total_width) / (items.length - 1)
+          spacing = 0 if spacing < 0
+        end
+        x_pos = option_start_x
+        items.each_with_index do |value, i|
+          is_selected = @values[this_index][:selections].include?(i)
+          is_cursor = (i == cursor_index)
+          checkbox = get_checkbox_text(is_selected)
+          text_value = checkbox + value
+          
+          # Use selected colors for cursor position
+          if is_cursor
+            color = self.selectedColor
+            shadow_color = self.selectedShadowColor
+          else
+            color = self.baseColor
+            shadow_color = self.shadowColor
+          end
+          
+          pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
+                           text_value, color, shadow_color)
+          # Use special spacing for 2-item multiselect to match array behavior
+          if items.length == 2 && i == 0
+            x_pos += @multiselect_second_value_x
+          else
+            # Advance using fixed checkbox width so spacing matches spacing calculation
+            x_pos += self.contents.text_size(fixed_checkbox + value).width + spacing
+          end
+        end
+      else
+        # Scrolling logic - show subset with arrows
+        x_pos = option_start_x
+        left_arrow_width = self.contents.text_size("< ").width
+        right_arrow_width = self.contents.text_size(" >").width
+        
+        # Determine if we need arrows based on scroll position and total items
+        has_previous = scroll > 0
+        
+        # Calculate reserved width for arrows
+        reserved_width = 0
+        reserved_width += left_arrow_width if has_previous
+        
+        # Get selections for width calculations
+        selections = @values[this_index][:selections]
+        
+        # Always reserve space for right arrow to calculate if we need it
+        test_reserved_width = reserved_width + right_arrow_width
+        visible_count = calculate_multiselect_visible(option, scroll, available_width - test_reserved_width, selections)
+        visible_end = [scroll + visible_count, items.length].min
+        has_next = visible_end < items.length
+        
+        # Set final reserved width based on which arrows we actually need
+        reserved_width += right_arrow_width if has_next
+        
+        # Recalculate visible count with correct reserved width
+        visible_count = calculate_multiselect_visible(option, scroll, available_width - reserved_width, selections)
+        visible_end = [scroll + visible_count, items.length].min
+        # Recalculate has_next with the final visible_end
+        has_next = visible_end < items.length
+        
+        # Calculate spacing using fixed checkbox width to keep layout stable
+        visible_total_width = 0
+        (scroll...visible_end).each do |i|
+          visible_total_width += self.contents.text_size(fixed_checkbox + items[i]).width
+        end
+        visible_available_width = available_width - reserved_width
+        
+        # Check if items actually fit with distributed spacing + arrows
+        # If not, reduce visible count until they fit
+        while visible_count > 1 && visible_total_width > visible_available_width
+          visible_count -= 1
+          visible_end = scroll + visible_count
+          has_next = visible_end < items.length
+          # Recalculate reserved width
+          reserved_width = 0
+          reserved_width += left_arrow_width if has_previous
+          reserved_width += right_arrow_width if has_next
+          visible_available_width = available_width - reserved_width
+          # Recalculate total width
+          visible_total_width = 0
+          (scroll...visible_end).each do |i|
+            visible_total_width += self.contents.text_size(fixed_checkbox + items[i]).width
+          end
+        end
+        
+        visible_spacing = 0
+        if visible_count > 1
+          visible_spacing = (visible_available_width - visible_total_width) / (visible_count - 1)
+          visible_spacing = 0 if visible_spacing < 0
+        end
+        
+        # Draw left arrow if there are previous items
+        if has_previous
+          pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
+                           "< ", self.baseColor, self.shadowColor)
+          x_pos += left_arrow_width
+        end
+        
+        # Draw visible items with spacing calculated from visible items only
+        (scroll...visible_end).each do |i|
+          value = items[i]
+          is_selected = @values[this_index][:selections].include?(i)
+          is_cursor = (i == cursor_index)
+          checkbox = get_checkbox_text(is_selected)
+          text_value = checkbox + value
+          
+          # Use selected colors for cursor position
+          if is_cursor
+            color = self.selectedColor
+            shadow_color = self.selectedShadowColor
+          else
+            color = self.baseColor
+            shadow_color = self.shadowColor
+          end
+          
+          pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
+                           text_value, color, shadow_color)
+          # Advance using fixed checkbox width so spacing matches visible_spacing calculation
+          x_pos += self.contents.text_size(fixed_checkbox + value).width
+          x_pos += visible_spacing if i < visible_end - 1
+        end
+        
+        # Draw right arrow if there are more items
+        if has_next
+          pbDrawShadowText(self.contents, x_pos, rect.y, option_width, rect.height,
+                           " >", self.baseColor, self.shadowColor)
+        end
+      end
     else
       value = option[:parameters][@values[this_index]]
       pbDrawShadowText(self.contents, option_start_x, rect.y, option_width, rect.height,
                        value, self.baseColor, self.shadowColor)
     end
+  end
+
+  def get_checkbox_text(value)
+    return value ? "[X] " : "[  ] "
   end
 
   def draw_selection_brackets(text_x, text_y, text, rect, option_width)
@@ -603,17 +1170,41 @@ class UI::OptionsVisualsList < Window_DrawableCommand
     end
     need_refresh = (self.index != old_index)
     if self.index < @options.length &&
-       [:array, :array_one, :number_type, :number_slider].include?(@options[self.index][:type])
+       [:array, :array_one, :number_type, :number_slider, :multiselect].include?(@options[self.index][:type])
       old_value = @values[self.index]
+      cursor_moved = false
       if Input.repeat?(Input::LEFT)
         @values[self.index] = previous_value(self.index)
+        cursor_moved = true
       elsif Input.repeat?(Input::RIGHT)
         @values[self.index] = next_value(self.index)
+        cursor_moved = true
+      end
+      # Handle toggling for multiselect
+      if @options[self.index][:type] == :multiselect && Input.trigger?(Input::USE)
+        cursor_pos = @values[self.index][:cursor]
+        scroll_pos = @values[self.index][:scroll]
+        selections = @values[self.index][:selections].clone
+        if selections.include?(cursor_pos)
+          selections.delete(cursor_pos)
+        else
+          selections.push(cursor_pos)
+        end
+        # Preserve the full hash structure with scroll
+        @values[self.index] = { cursor: cursor_pos, selections: selections, scroll: scroll_pos }
+        pbPlayDecisionSE
+        need_refresh = true
+        @value_changed = true
       end
       if self.value != old_value
         pbPlayCursorSE if selected_option[:type] != :number_slider
         need_refresh = true
         @value_changed = true
+      end
+      # Ensure array and multiselect scroll stays consistent (only when cursor moved)
+      if cursor_moved
+        fix_array_scroll(self.index) if [:array, :array_one].include?(@options[self.index][:type])
+        fix_multiselect_scroll(self.index) if @options[self.index][:type] == :multiselect
       end
     end
     refresh if need_refresh
@@ -1132,7 +1723,7 @@ if Settings::USE_NEW_OPTIONS_UI
     "name"        => _INTL("Velocidad de texto"),
     "order"       => 10,
     "type"        => :array,
-    "parameters"  => proc { [_INTL("Len"), _INTL("Med"), _INTL("Ráp"), _INTL("Inst")] },
+    "parameters"  => proc { [_INTL("Lento"), _INTL("Medio"), _INTL("Rápido"), _INTL("Instantáneo")] },
     "description" => _INTL("Elige la velocidad a la que aparece el texto."),
     "on_select"   => proc { |screen| screen.sprites[:speech_box].letterbyletter = true },
     "get_proc"    => proc { next $PokemonSystem.textspeed },
@@ -1500,4 +2091,33 @@ if Settings::USE_NEW_OPTIONS_UI
   #     Input.update
   #   }
   # })
+
+  #-------------------------------------------------------------------------------
+  # MULTISELECT OPTION EXAMPLE
+  # This option type allows selecting multiple values from a list.
+  # Use LEFT/RIGHT arrows to navigate and ENTER/Z to toggle selections.
+  # Dynamically calculates how many items fit per page based on available width.
+  # Shows navigation arrows (< >) when there are more items to view.
+  #-------------------------------------------------------------------------------
+
+  # # First, add a field to track the selections in PokemonSystem
+  # # In 010_PokemonSystem.rb or similar:
+  # # attr_accessor :my_multiselect_option
+  # #
+  # # In the initialize method:
+  # # @my_multiselect_option = [] # Array of selected indices
+  #
+  MenuHandlers.add(:options_menu, :example_multiselect, {
+    "page"        => :gameplay,
+    "name"        => _INTL("Multi-option"),
+    "order"       => 100,
+    "type"        => :multiselect,
+    "parameters"  => [_INTL("A"), _INTL("B"), _INTL("C"), _INTL("Opción D"), _INTL("E"), _INTL("F"), _INTL("G")],
+    "description" => _INTL("Selecciona múltiples opciones. Usa flechas para navegar y Enter para marcar."),
+    "get_proc"    => proc { next $PokemonSystem.my_multiselect_option || [] },
+    "set_proc"    => proc { |value, _screen|
+      $PokemonSystem.my_multiselect_option = value
+      # value is an array of indices, e.g., [0, 2, 4] means options A, C, and E are selected
+    }
+  })
 end
