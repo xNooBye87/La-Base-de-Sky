@@ -383,8 +383,9 @@ class UI::OptionsVisualsList < Window_DrawableCommand
   end
 
   def previous_value(this_index)
-    return @values[this_index] if @values[this_index] == 0
     option = @options[this_index]
+    # Early return for array types when at minimum (no cycling for arrays)
+    return @values[this_index] if @values[this_index] == 0 && [:array, :array_one].include?(option[:type])
     case option[:type]
     when :array, :array_one
       return @values[this_index] - 1
