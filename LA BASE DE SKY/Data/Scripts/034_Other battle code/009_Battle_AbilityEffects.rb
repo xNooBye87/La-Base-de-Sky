@@ -3512,7 +3512,6 @@ Battle::AbilityEffects::OnSwitchIn.add(:SUPERSWEETSYRUP,
       b.pbLowerEvasionStatStageSupersweetSyrup(battler)
     end
     battle.pbHideAbilitySplash(battler)
-    battle.pbSetAbilityTrigger(battler)
   }
 )
 
