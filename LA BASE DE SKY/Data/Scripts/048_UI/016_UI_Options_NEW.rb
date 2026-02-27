@@ -1055,7 +1055,7 @@ class UI::OptionsVisualsList < Window_DrawableCommand
     need_refresh = (self.index != old_index)
     if self.index < @options.length &&
        [:array, :array_one, :number_type, :number_slider, :multiselect].include?(@options[self.index][:type])
-      old_value = @values[self.index]
+      old_value = self.value
       cursor_moved = false
       if Input.repeat?(Input::LEFT)
         @values[self.index] = previous_value(self.index)
